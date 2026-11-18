@@ -1,7 +1,7 @@
 
 import { BrowserRouter, Routes, Route, Navigate, Link } from "react-router-dom";
 import { Droplets, ArrowRight } from "lucide-react";
-
+import React from "react";
 import Dashboard from "./pages/Dashboard";
 import AreaDetails from "./pages/AreaDetails";
 import SubmitReport from "./pages/SubmitReport";
