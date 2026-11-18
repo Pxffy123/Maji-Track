@@ -6,7 +6,9 @@ import Dashboard from "./pages/Dashboard";
 import AreaDetails from "./pages/AreaDetails";
 import SubmitReport from "./pages/SubmitReport";
 import Admin from "./pages/Admin";
-import Landing from "./pages/Landing";
+
+
+
 function Landing() {
   return (
     <main style={{
