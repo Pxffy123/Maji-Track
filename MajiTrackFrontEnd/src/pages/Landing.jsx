@@ -13,7 +13,7 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import "./style.css";
+
 
 const API_URL =
   import.meta.env.VITE_API_URL || "http://127.0.0.1:5555/api";
