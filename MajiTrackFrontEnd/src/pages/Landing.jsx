@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -13,7 +14,6 @@ import {
   Menu,
   X,
 } from "lucide-react";
-
 
 const API_URL =
   import.meta.env.VITE_API_URL || "http://127.0.0.1:5555/api";
@@ -33,9 +33,11 @@ async function apiRequest(endpoint, options = {}) {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(
+    const error = new Error(
       data.error || data.message || data.msg || "Something went wrong."
     );
+    error.status = response.status;
+    throw error;
   }
 
   return data;
@@ -46,6 +48,8 @@ function Landing() {
 
   const [mobileMenu, setMobileMenu] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [showResend, setShowResend] = useState(false);
 
   const [loginForm, setLoginForm] = useState({
     email: "",
@@ -70,6 +74,12 @@ function Landing() {
       ...loginForm,
       [e.target.name]: e.target.value,
     });
+
+    if (e.target.name === "email") {
+      setShowResend(false);
+      setLoginMessage("");
+      setLoginMessageType("");
+    }
   }
 
   function handleRegisterChange(e) {
@@ -104,7 +114,8 @@ function Landing() {
       });
 
       setRegisterMessage(
-        data.message || "Registration successful. You can now log in."
+        data.message ||
+          "Registration successful. Please check your email for verification."
       );
       setRegisterMessageType("success");
 
@@ -127,6 +138,7 @@ function Landing() {
 
     setLoginMessage("");
     setLoginMessageType("");
+    setShowResend(false);
     setLoading(true);
 
     try {
@@ -153,8 +165,44 @@ function Landing() {
     } catch (error) {
       setLoginMessage(error.message);
       setLoginMessageType("error");
+
+      setShowResend(
+        error.status === 403 &&
+        error.message.toLowerCase().includes("verif")
+      );
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleResendVerification() {
+    if (!loginForm.email.trim()) {
+      setLoginMessage("Please enter your email address first.");
+      setLoginMessageType("error");
+      return;
+    }
+
+    setResending(true);
+
+    try {
+      const data = await apiRequest("/auth/resend-verification", {
+        method: "POST",
+        body: JSON.stringify({
+          email: loginForm.email.trim(),
+        }),
+      });
+
+      setLoginMessage(
+        data.message ||
+          "Verification email sent. Please check your inbox."
+      );
+      setLoginMessageType("success");
+      setShowResend(false);
+    } catch (error) {
+      setLoginMessage(error.message);
+      setLoginMessageType("error");
+    } finally {
+      setResending(false);
     }
   }
 
@@ -329,7 +377,7 @@ function Landing() {
           <div className="feature-card">
             <ShieldCheck size={35} />
             <h3>Admin Management</h3>
-            <p>Administrators can review and manage community reports.</p>
+            <p>Administrators can review and manage reports.</p>
           </div>
 
           <div className="feature-card">
@@ -387,7 +435,7 @@ function Landing() {
         </div>
       </section>
 
-      {/* LOGIN AND REGISTER */}
+      {/* LOGIN */}
       <section className="section account-section" id="login">
         <div className="account-card">
           <div className="account-icon">
@@ -422,7 +470,24 @@ function Landing() {
               </p>
             )}
 
-            <button type="submit" className="primary-btn full-btn" disabled={loading}>
+            {showResend && (
+              <button
+                type="button"
+                className="secondary-btn full-btn"
+                onClick={handleResendVerification}
+                disabled={resending || loading}
+              >
+                {resending
+                  ? "Sending..."
+                  : "Resend verification email"}
+              </button>
+            )}
+
+            <button
+              type="submit"
+              className="primary-btn full-btn"
+              disabled={loading || resending}
+            >
               {loading ? "Please wait..." : "Login"}
             </button>
           </form>
@@ -433,7 +498,11 @@ function Landing() {
         </div>
       </section>
 
-      <section className="section account-section register-section" id="register">
+      {/* REGISTER */}
+      <section
+        className="section account-section register-section"
+        id="register"
+      >
         <div className="account-card">
           <div className="account-icon">
             <Droplets size={35} />
@@ -487,7 +556,11 @@ function Landing() {
               </p>
             )}
 
-            <button type="submit" className="primary-btn full-btn" disabled={loading}>
+            <button
+              type="submit"
+              className="primary-btn full-btn"
+              disabled={loading}
+            >
               {loading ? "Please wait..." : "Create Account"}
             </button>
           </form>
@@ -516,7 +589,9 @@ function Landing() {
         </div>
 
         <div className="footer-bottom">
-          <p>© {new Date().getFullYear()} Maji-Track. All rights reserved.</p>
+          <p>
+            © {new Date().getFullYear()} Maji-Track. All rights reserved.
+          </p>
         </div>
       </footer>
     </div>
