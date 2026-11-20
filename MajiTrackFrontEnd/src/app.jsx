@@ -1,20 +1,13 @@
-<<<<<<< Updated upstream
 
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import React from "react";
-=======
-import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
->>>>>>> Stashed changes
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import AreaDetails from "./pages/AreaDetails";
 import SubmitReport from "./pages/SubmitReport";
 import Admin from "./pages/Admin";
 
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
+
 function Landing() {
   return (
     <main>
@@ -34,9 +27,7 @@ function Landing() {
   );
 }
 
-=======
->>>>>>> 413a5e4247c9e3f6a26ae708fd4e2ddffab864fc
->>>>>>> Stashed changes
+
 export default function App() {
   return (
     <BrowserRouter>
