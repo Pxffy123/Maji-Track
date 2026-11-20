@@ -1,4 +1,6 @@
 
+import "../styles.css";
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -49,7 +51,9 @@ function Landing() {
   const [mobileMenu, setMobileMenu] = useState(false);
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const [showResend, setShowResend] = useState(false);
+  const [verificationStep, setVerificationStep] = useState(false);
 
   const [loginForm, setLoginForm] = useState({
     email: "",
@@ -63,11 +67,16 @@ function Landing() {
     confirmPassword: "",
   });
 
+  const [verificationEmail, setVerificationEmail] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+
   const [loginMessage, setLoginMessage] = useState("");
   const [registerMessage, setRegisterMessage] = useState("");
+  const [verificationMessage, setVerificationMessage] = useState("");
 
   const [loginMessageType, setLoginMessageType] = useState("");
   const [registerMessageType, setRegisterMessageType] = useState("");
+  const [verificationMessageType, setVerificationMessageType] = useState("");
 
   function handleLoginChange(e) {
     setLoginForm({
@@ -104,24 +113,28 @@ function Landing() {
     setLoading(true);
 
     try {
+      const email = registerForm.email.trim().toLowerCase();
+
       const data = await apiRequest("/auth/register", {
         method: "POST",
         body: JSON.stringify({
-          username: registerForm.username,
-          email: registerForm.email,
+          username: registerForm.username.trim(),
+          email,
           password: registerForm.password,
         }),
       });
 
-      setRegisterMessage(
-        data.message ||
-          "Registration successful. Please check your email for verification."
+      setVerificationEmail(email);
+      setVerificationCode("");
+      setVerificationMessage(
+        data.message || "Check your email for your six-digit verification code."
       );
-      setRegisterMessageType("success");
+      setVerificationMessageType("success");
+      setVerificationStep(true);
 
       setRegisterForm({
         username: "",
-        email: registerForm.email,
+        email: "",
         password: "",
         confirmPassword: "",
       });
@@ -130,6 +143,110 @@ function Landing() {
       setRegisterMessageType("error");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleVerifyEmail(e) {
+    e.preventDefault();
+
+    setVerificationMessage("");
+    setVerificationMessageType("");
+
+    if (!/^\d{6}$/.test(verificationCode.trim())) {
+      setVerificationMessage("Please enter your six-digit verification code.");
+      setVerificationMessageType("error");
+      return;
+    }
+
+    setVerifying(true);
+
+    try {
+      const data = await apiRequest("/auth/verify-email", {
+        method: "POST",
+        body: JSON.stringify({
+          email: verificationEmail.trim().toLowerCase(),
+          code: verificationCode.trim(),
+        }),
+      });
+
+      setVerificationMessage(
+        data.message || "Email verified successfully. You can now log in."
+      );
+      setVerificationMessageType("success");
+
+      setLoginForm({
+        email: verificationEmail,
+        password: "",
+      });
+
+      setVerificationCode("");
+      setVerificationStep(false);
+
+      setLoginMessage(
+        "Your email is verified! You can now log in."
+      );
+      setLoginMessageType("success");
+
+      setTimeout(() => {
+        document.getElementById("login")?.scrollIntoView({
+          behavior: "smooth",
+        });
+      }, 100);
+    } catch (error) {
+      setVerificationMessage(error.message);
+      setVerificationMessageType("error");
+    } finally {
+      setVerifying(false);
+    }
+  }
+
+  async function handleResendVerification() {
+    const email = verificationStep
+      ? verificationEmail.trim()
+      : loginForm.email.trim();
+
+    if (!email) {
+      if (verificationStep) {
+        setVerificationMessage("Please enter your email address.");
+        setVerificationMessageType("error");
+      } else {
+        setLoginMessage("Please enter your email address first.");
+        setLoginMessageType("error");
+      }
+      return;
+    }
+
+    setResending(true);
+
+    try {
+      const data = await apiRequest("/auth/resend-verification", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      });
+
+      if (verificationStep) {
+        setVerificationMessage(
+          data.message || "A new verification code has been sent to your email."
+        );
+        setVerificationMessageType("success");
+        setVerificationCode("");
+      } else {
+        setLoginMessage(
+          data.message || "A new verification code has been sent to your email."
+        );
+        setLoginMessageType("success");
+        setShowResend(false);
+      }
+    } catch (error) {
+      if (verificationStep) {
+        setVerificationMessage(error.message);
+        setVerificationMessageType("error");
+      } else {
+        setLoginMessage(error.message);
+        setLoginMessageType("error");
+      }
+    } finally {
+      setResending(false);
     }
   }
 
@@ -172,37 +289,6 @@ function Landing() {
       );
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function handleResendVerification() {
-    if (!loginForm.email.trim()) {
-      setLoginMessage("Please enter your email address first.");
-      setLoginMessageType("error");
-      return;
-    }
-
-    setResending(true);
-
-    try {
-      const data = await apiRequest("/auth/resend-verification", {
-        method: "POST",
-        body: JSON.stringify({
-          email: loginForm.email.trim(),
-        }),
-      });
-
-      setLoginMessage(
-        data.message ||
-          "Verification email sent. Please check your inbox."
-      );
-      setLoginMessageType("success");
-      setShowResend(false);
-    } catch (error) {
-      setLoginMessage(error.message);
-      setLoginMessageType("error");
-    } finally {
-      setResending(false);
     }
   }
 
@@ -473,13 +559,11 @@ function Landing() {
             {showResend && (
               <button
                 type="button"
-                className="secondary-btn full-btn"
+                className="resend-verification-btn"
                 onClick={handleResendVerification}
                 disabled={resending || loading}
               >
-                {resending
-                  ? "Sending..."
-                  : "Resend verification email"}
+                {resending ? "Sending..." : "Resend verification email"}
               </button>
             )}
 
@@ -498,7 +582,7 @@ function Landing() {
         </div>
       </section>
 
-      {/* REGISTER */}
+      {/* REGISTER / EMAIL VERIFICATION */}
       <section
         className="section account-section register-section"
         id="register"
@@ -508,66 +592,139 @@ function Landing() {
             <Droplets size={35} />
           </div>
 
-          <h2>Create Your Account</h2>
-          <p>Join Maji-Track and help improve water services.</p>
-
-          <form onSubmit={handleRegister}>
-            <input
-              type="text"
-              name="username"
-              placeholder="Username"
-              value={registerForm.username}
-              onChange={handleRegisterChange}
-              required
-            />
-
-            <input
-              type="email"
-              name="email"
-              placeholder="Email address"
-              value={registerForm.email}
-              onChange={handleRegisterChange}
-              required
-            />
-
-            <input
-              type="password"
-              name="password"
-              placeholder="Password"
-              value={registerForm.password}
-              onChange={handleRegisterChange}
-              required
-              minLength="8"
-            />
-
-            <input
-              type="password"
-              name="confirmPassword"
-              placeholder="Confirm password"
-              value={registerForm.confirmPassword}
-              onChange={handleRegisterChange}
-              required
-              minLength="8"
-            />
-
-            {registerMessage && (
-              <p className={`form-message ${registerMessageType}`}>
-                {registerMessage}
+          {verificationStep ? (
+            <>
+              <h2>Verify Your Email</h2>
+              <p>
+                We've sent a six-digit verification code to:
               </p>
-            )}
 
-            <button
-              type="submit"
-              className="primary-btn full-btn"
-              disabled={loading}
-            >
-              {loading ? "Please wait..." : "Create Account"}
-            </button>
-          </form>
+              <p className="verification-email">
+                <strong>{verificationEmail}</strong>
+              </p>
 
-          <p className="account-switch">
-            Already have an account? <a href="#login">Login here</a>
-          </p>
+              <form onSubmit={handleVerifyEmail}>
+                <input
+                  type="text"
+                  name="verificationCode"
+                  placeholder="Enter your 6-digit code"
+                  value={verificationCode}
+                  onChange={(e) =>
+                    setVerificationCode(
+                      e.target.value.replace(/\D/g, "").slice(0, 6)
+                    )
+                  }
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  pattern="[0-9]{6}"
+                  required
+                />
+
+                {verificationMessage && (
+                  <p className={`form-message ${verificationMessageType}`}>
+                    {verificationMessage}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  className="primary-btn full-btn"
+                  disabled={verifying || resending}
+                >
+                  {verifying ? "Verifying..." : "Verify Email"}
+                </button>
+
+                <button
+                  type="button"
+                  className="resend-verification-btn"
+                  onClick={handleResendVerification}
+                  disabled={resending || verifying}
+                >
+                  {resending ? "Sending..." : "Resend verification code"}
+                </button>
+              </form>
+
+              <p className="account-switch">
+                Wrong email?{" "}
+                <button
+                  type="button"
+                  className="text-btn"
+                  onClick={() => {
+                    setVerificationStep(false);
+                    setVerificationMessage("");
+                    setVerificationMessageType("");
+                    setRegisterMessage("");
+                  }}
+                >
+                  Back to registration
+                </button>
+              </p>
+            </>
+          ) : (
+            <>
+              <h2>Create Your Account</h2>
+              <p>Join Maji-Track and help improve water services.</p>
+
+              <form onSubmit={handleRegister}>
+                <input
+                  type="text"
+                  name="username"
+                  placeholder="Username"
+                  value={registerForm.username}
+                  onChange={handleRegisterChange}
+                  required
+                />
+
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Email address"
+                  value={registerForm.email}
+                  onChange={handleRegisterChange}
+                  required
+                />
+
+                <input
+                  type="password"
+                  name="password"
+                  placeholder="Password"
+                  value={registerForm.password}
+                  onChange={handleRegisterChange}
+                  required
+                  minLength="8"
+                />
+
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  placeholder="Confirm password"
+                  value={registerForm.confirmPassword}
+                  onChange={handleRegisterChange}
+                  required
+                  minLength="8"
+                />
+
+                {registerMessage && (
+                  <p className={`form-message ${registerMessageType}`}>
+                    {registerMessage}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  className="primary-btn full-btn"
+                  disabled={loading}
+                >
+                  {loading ? "Please wait..." : "Create Account"}
+                </button>
+              </form>
+
+              <p className="account-switch">
+                Already have an account? <a href="#login">Login here</a>
+              </p>
+            </>
+          )}
         </div>
       </section>
 
