@@ -805,3 +805,382 @@ a {
   }
 }
 
+.submit-report {
+  max-width: 750px;
+  margin: 50px auto;
+  padding: 35px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+}
+
+.submit-report h1 {
+  color: var(--navy);
+  font-size: 30px;
+  margin-bottom: 28px;
+}
+
+.submit-report form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.submit-report label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.submit-report input,
+.submit-report select,
+.submit-report textarea {
+  width: 100%;
+  padding: 13px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--background);
+  color: var(--text);
+  font: inherit;
+}
+
+.submit-report textarea {
+  resize: vertical;
+  min-height: 110px;
+}
+
+.submit-report input:focus,
+.submit-report select:focus,
+.submit-report textarea:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(8, 126, 155, 0.12);
+}
+
+.submit-report .duration {
+  display: flex;
+  gap: 12px;
+}
+
+.submit-report button {
+  padding: 14px;
+  background: var(--blue);
+  color: var(--white);
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.submit-report button:hover:not(:disabled) {
+  background: var(--navy);
+  transform: translateY(-1px);
+}
+
+.submit-report button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.submit-report .error {
+  color: #b91c1c;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.submit-report .message {
+  padding: 13px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  line-height: 1.5;
+}
+
+.submit-report .message.success {
+  background: #e5f8ed;
+  color: #187444;
+  border: 1px solid #bce8ce;
+}
+
+.submit-report .message.error {
+  background: #fff0f0;
+  color: #bd3434;
+  border: 1px solid #f2caca;
+}
+
+.card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 5px 20px rgba(8, 43, 73, 0.05);
+}
+
+.weather-panel {
+  padding: 24px;
+  color: var(--text);
+}
+
+.weather-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.weather-head h3 {
+  color: var(--navy);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.weather-temp {
+  margin-top: 16px;
+  color: var(--navy);
+  font-size: 42px;
+  line-height: 1.1;
+  font-weight: 800;
+}
+
+.weather-cond {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.weather-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.weather-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 13px;
+  border-radius: 10px;
+  background: var(--aqua-light);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.weather-stat svg {
+  color: var(--blue);
+}
+
+.weather-stat strong {
+  color: var(--navy);
+  font-size: 15px;
+}
+
+.weather-state {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.weather-error {
+  color: #b91c1c;
+  background: #fff0f0;
+  border-color: #f2caca;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  padding: 6px 11px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.badge-critical {
+  color: #b91c1c;
+  background: #fee2e2;
+}
+
+.badge-high {
+  color: #b45309;
+  background: #fef3c7;
+}
+
+.badge-medium {
+  color: #087e9b;
+  background: #e5f8f8;
+}
+
+.badge-low {
+  color: #15803d;
+  background: #dcfce7;
+}
+
+@media (max-width: 700px) {
+  .submit-report {
+    margin: 25px 16px;
+    padding: 26px 20px;
+  }
+
+  .submit-report h1 {
+    font-size: 25px;
+  }
+
+  .weather-panel {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .submit-report {
+    margin: 18px 10px;
+    padding: 22px 16px;
+  }
+
+  .submit-report .duration {
+    flex-direction: column;
+  }
+
+  .weather-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .weather-stat {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+.app-welcome {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  background:
+    radial-gradient(circle at top right, rgba(33, 198, 201, 0.12), transparent 35%),
+    var(--background);
+}
+
+.app-welcome-card {
+  width: 100%;
+  max-width: 760px;
+  padding: 65px 55px;
+  text-align: center;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(8, 43, 73, 0.1);
+}
+
+.app-welcome-icon {
+  width: 90px;
+  height: 90px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 25px;
+  background: var(--aqua-light);
+  color: var(--blue);
+  border-radius: 24px;
+}
+
+.app-welcome-label {
+  display: inline-block;
+  color: var(--blue);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  margin-bottom: 18px;
+}
+
+.app-welcome-card h1 {
+  font-size: clamp(42px, 6vw, 65px);
+  font-weight: 800;
+  color: var(--navy);
+  margin-bottom: 15px;
+}
+
+.app-welcome-card h2 {
+  color: var(--navy-light);
+  font-size: clamp(20px, 3vw, 27px);
+  margin-bottom: 20px;
+}
+
+.app-welcome-card > p {
+  max-width: 580px;
+  margin: 0 auto 30px;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.9;
+}
+
+.app-welcome-button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 28px;
+  background: var(--navy);
+  color: var(--white);
+  border-radius: 10px;
+  font-weight: 700;
+  transition: 0.3s ease;
+}
+
+.app-welcome-button:hover {
+  background: var(--blue);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(8, 126, 155, 0.2);
+}
+
+.app-welcome-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  border-top: 1px solid var(--border);
+  margin-top: 40px;
+  padding-top: 22px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.app-welcome-footer span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.app-welcome-footer svg {
+  color: var(--blue);
+}
+
+@media (max-width: 600px) {
+  .app-welcome-card {
+    padding: 40px 22px;
+    border-radius: 18px;
+  }
+
+  .app-welcome-icon {
+    width: 72px;
+    height: 72px;
+  }
+
+  .app-welcome-card > p {
+    font-size: 14px;
+  }
+
+  .app-welcome-footer {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
