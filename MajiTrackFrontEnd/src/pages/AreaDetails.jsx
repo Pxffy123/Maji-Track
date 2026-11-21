@@ -9,13 +9,16 @@ import {
   Clock,
   FileText,
 } from "lucide-react";
+import { areas } from "../data/areas";
 
 const AreaDetails = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { id } = useParams();
 
-  const area = location.state?.area;
+  // Prefer the area passed from the dashboard, but fall back to a lookup by id
+  // so refreshes and direct links keep working.
+  const area = location.state?.area || areas.find((a) => a.id === id);
 
   const statusStyles = {
     "No Water": {
@@ -38,7 +41,7 @@ const AreaDetails = () => {
     },
   };
 
-  if (!area || area.id !== id) {
+  if (!area) {
     return (
       <div style={{ padding: "40px", fontFamily: "Arial" }}>
         <h2>Area details unavailable</h2>

@@ -1,16 +1,25 @@
 import { useState } from "react";
-import { NavLink, Link } from "react-router-dom";
+import { NavLink, Link, useNavigate } from "react-router-dom";
 import { Droplets, Menu, X } from "lucide-react";
+import { getToken, clearSession } from "../services/api";
 
 const links = [
   { to: "/dashboard", label: "Dashboard" },
-  { to: "/report", label: "Report shortage" },
+  { to: "/submit-report", label: "Report shortage" },
   { to: "/admin", label: "Admin" },
 ];
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+  const loggedIn = Boolean(getToken());
   const close = () => setOpen(false);
+
+  function logout() {
+    clearSession();
+    close();
+    navigate("/");
+  }
 
   return (
     <nav className="navbar" aria-label="Main">
@@ -21,6 +30,7 @@ export default function Navbar() {
         </Link>
 
         <button
+          type="button"
           className="navbar-toggle"
           onClick={() => setOpen(!open)}
           aria-expanded={open}
@@ -40,12 +50,22 @@ export default function Navbar() {
               {l.label}
             </NavLink>
           ))}
-          <NavLink to="/login" onClick={close} className="nav-link">
-            Log in
-          </NavLink>
-          <NavLink to="/signup" onClick={close} className="nav-link nav-cta">
-            Sign up
-          </NavLink>
+
+          {loggedIn ? (
+            <button type="button" className="nav-link nav-cta" onClick={logout}>
+              Log out
+            </button>
+          ) : (
+            <>
+              {/* Login and sign up live on the landing page */}
+              <Link to="/#login" onClick={close} className="nav-link">
+                Log in
+              </Link>
+              <Link to="/#register" onClick={close} className="nav-link nav-cta">
+                Sign up
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </nav>
