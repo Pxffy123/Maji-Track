@@ -1255,3 +1255,92 @@ a {
   color: #28a745;
   border: 1px solid rgba(40, 167, 69, 0.25);
 }
+
+/* ---------- Shared Navbar component (Dashboard, Report, Admin) ---------- */
+.navbar-inner {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.navbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--white);
+  font-size: 22px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.navbar-logo svg {
+  color: var(--aqua);
+}
+
+.navbar-links {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+}
+
+.navbar .nav-link {
+  color: #e6f2f8;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: 0.3s ease;
+}
+
+.navbar .nav-link:hover,
+.navbar .nav-link.active {
+  color: var(--aqua);
+}
+
+.navbar .nav-link.nav-cta {
+  background: var(--aqua);
+  color: var(--navy);
+  padding: 10px 20px;
+  border-radius: 7px;
+}
+
+.navbar .nav-link.nav-cta:hover {
+  background: #78e9e4;
+  color: var(--navy);
+}
+
+.navbar-toggle {
+  display: none;
+  border: none;
+  background: transparent;
+  color: var(--white);
+  cursor: pointer;
+}
+
+@media (max-width: 860px) {
+  .navbar-toggle {
+    display: block;
+  }
+
+  .navbar-inner {
+    flex-wrap: wrap;
+  }
+
+  .navbar-links {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 18px 0 8px;
+  }
+
+  .navbar-links.open {
+    display: flex;
+  }
+}
