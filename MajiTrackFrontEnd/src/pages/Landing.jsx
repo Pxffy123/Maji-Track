@@ -200,6 +200,7 @@ function Landing() {
     }
   }
 
+  
   async function handleResendVerification() {
     const email = verificationStep
       ? verificationEmail.trim()
@@ -215,6 +216,51 @@ function Landing() {
       }
       return;
     }
+
+    setResending(true);
+
+    try {
+      const data = await apiRequest("/auth/resend-verification", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      });
+
+      if (verificationStep) {
+        setVerificationMessage(
+          data.message || "A new verification code has been sent to your email."
+        );
+        setVerificationMessageType("success");
+        setVerificationCode("");
+      } else {
+        // Move the user from login to the verification screen
+        setVerificationEmail(email.toLowerCase());
+        setVerificationCode("");
+        setVerificationMessage(
+          data.message || "A new verification code has been sent to your email."
+        );
+        setVerificationMessageType("success");
+        setVerificationStep(true);
+        setShowResend(false);
+
+        setTimeout(() => {
+          document.getElementById("register")?.scrollIntoView({
+            behavior: "smooth",
+          });
+        }, 100);
+      }
+    } catch (error) {
+      if (verificationStep) {
+        setVerificationMessage(error.message);
+        setVerificationMessageType("error");
+      } else {
+        setLoginMessage(error.message);
+        setLoginMessageType("error");
+      }
+    } finally {
+      setResending(false);
+    }
+  }
+
 
     setResending(true);
 
