@@ -1,6 +1,6 @@
 
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Droplets,
@@ -16,38 +16,20 @@ import {
   X,
 } from "lucide-react";
 
-const API_URL =
-  import.meta.env.VITE_API_URL || "http://127.0.0.1:5555/api";
-
-async function apiRequest(endpoint, options = {}) {
-  const token = localStorage.getItem("access_token");
-
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
-  });
-
-  const data = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    const error = new Error(
-      data.error || data.message || data.msg || "Something went wrong."
-    );
-    error.status = response.status;
-    throw error;
-  }
-
-  return data;
-}
+import { apiRequest, saveSession } from "../services/api";
 
 function Landing() {
   const navigate = useNavigate();
 
   const [mobileMenu, setMobileMenu] = useState(false);
+
+  // Scroll to #login / #register when arriving from another page
+  useEffect(() => {
+    const id = window.location.hash.slice(1);
+    if (id) {
+      setTimeout(() => document.getElementById(id)?.scrollIntoView(), 0);
+    }
+  }, []);
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [verifying, setVerifying] = useState(false);
@@ -269,11 +251,7 @@ function Landing() {
       });
 
       if (data.access_token) {
-        localStorage.setItem("access_token", data.access_token);
-      }
-
-      if (data.user) {
-        localStorage.setItem("user", JSON.stringify(data.user));
+        saveSession(data.access_token, data.user, data.refresh_token);
       }
 
       if (!data.access_token) {
