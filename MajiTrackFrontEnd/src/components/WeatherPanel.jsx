@@ -1,3 +1,4 @@
+import React from "react";
 import { Droplets, Wind, CloudRain } from "lucide-react";
 
 export default function WeatherPanel({ weather, loading = false, error = "" }) {

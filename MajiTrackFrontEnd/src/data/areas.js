@@ -1,98 +1,5 @@
-// Sample Nairobi data used by the dashboard until it is wired to the backend.
-export const areas = [
-  {
-    id: "embakasi",
-    name: "Embakasi",
-    location: "Umoja 1, Pipeline, Donholm",
-    status: "No Water",
-    severity: "Critical",
-    reports: 18,
-    lastUpdated: "Today",
-  },
-  {
-    id: "kibra",
-    name: "Kibra",
-    location: "Laini Saba, Makina",
-    status: "No Water",
-    severity: "Critical",
-    reports: 15,
-    lastUpdated: "Today",
-  },
-  {
-    id: "westlands",
-    name: "Westlands",
-    location: "Kangemi, Mountain View",
-    status: "Low Supply",
-    severity: "High",
-    reports: 12,
-    lastUpdated: "Today",
-  },
-  {
-    id: "makadara",
-    name: "Makadara",
-    location: "Buruburu, Maringo",
-    status: "Low Supply",
-    severity: "Moderate",
-    reports: 9,
-    lastUpdated: "Yesterday",
-  },
-  {
-    id: "kasarani",
-    name: "Kasarani",
-    location: "Mwiki, Roysambu",
-    status: "Available",
-    severity: "Low",
-    reports: 7,
-    lastUpdated: "Yesterday",
-  },
-];
-
-export const sampleReports = [
-  {
-    id: 1,
-    title: "Critical Water Shortage",
-    area: "Umoja 1, Embakasi",
-    description:
-      "Residents have reported being without water for approximately three weeks.",
-    status: "No Water",
-    date: "Today",
-    verified: true,
-    severity: "Critical",
-  },
-  {
-    id: 2,
-    title: "Prolonged Water Interruption",
-    area: "Laini Saba, Kibra",
-    description:
-      "Several households have experienced an extended interruption in water supply.",
-    status: "No Water",
-    date: "Today",
-    verified: true,
-    severity: "Critical",
-  },
-  {
-    id: 3,
-    title: "Irregular Water Supply",
-    area: "Kangemi, Westlands",
-    description:
-      "Residents report inconsistent water supply over the past five days.",
-    status: "Low Supply",
-    date: "Yesterday",
-    verified: true,
-    severity: "High",
-  },
-  {
-    id: 4,
-    title: "Water Supply Disruption",
-    area: "Buruburu, Makadara",
-    description:
-      "Water supply has been inconsistent in several neighbourhoods.",
-    status: "Low Supply",
-    date: "Yesterday",
-    verified: true,
-    severity: "Moderate",
-  },
-];
+// Helpers that turn the backend's approved reports (GET /api/reports)
+// into the shapes the dashboard components display.
 
 export const severityPriority = {
   Critical: 4,
@@ -100,3 +7,88 @@ export const severityPriority = {
   Moderate: 2,
   Low: 1,
 };
+
+// The backend stores a severity, not a water status, so derive one:
+// Critical = no water at all, anything else = limited supply.
+export const statusFromSeverity = (severity) =>
+  severity === "Critical" ? "No Water" : "Low Supply";
+
+export function formatRelativeDate(iso) {
+  if (!iso) return "Date unavailable";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "Date unavailable";
+
+  const startOfDay = (d) =>
+    new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const days = Math.round(
+    (startOfDay(new Date()) - startOfDay(date)) / 86400000
+  );
+
+  if (days <= 0) return "Today";
+  if (days === 1) return "Yesterday";
+  if (days < 7) return `${days} days ago`;
+  return date.toLocaleDateString();
+}
+
+// Most severe first, newest first within the same severity.
+export function sortReports(reports) {
+  return [...reports].sort(
+    (a, b) =>
+      (severityPriority[b.severity] || 0) -
+        (severityPriority[a.severity] || 0) ||
+      new Date(b.created_at) - new Date(a.created_at)
+  );
+}
+
+// Shape used by ReportCard
+export function toReportCard(report) {
+  return {
+    id: report.id,
+    title: `${report.severity} shortage \u2013 ${report.time_without_water} without water`,
+    area: `${report.location}, ${report.district}`,
+    description: report.description,
+    status: statusFromSeverity(report.severity),
+    date: formatRelativeDate(report.created_at),
+    verified: true, // the public endpoint only returns approved reports
+    severity: report.severity,
+  };
+}
+
+// Group reports by district -> shape used by AreaCard / AreaDetails
+export function buildAreas(reports) {
+  const byDistrict = new Map();
+
+  for (const report of reports) {
+    const key = String(report.district_id);
+    if (!byDistrict.has(key)) byDistrict.set(key, []);
+    byDistrict.get(key).push(report);
+  }
+
+  return [...byDistrict.entries()]
+    .map(([id, list]) => {
+      const worst = list.reduce((a, b) =>
+        (severityPriority[b.severity] || 0) > (severityPriority[a.severity] || 0)
+          ? b
+          : a
+      );
+      const latest = list.reduce((a, b) =>
+        new Date(b.created_at) > new Date(a.created_at) ? b : a
+      );
+      const places = [...new Set(list.map((r) => r.location))].slice(0, 3);
+
+      return {
+        id,
+        name: worst.district,
+        location: places.join(", "),
+        status: statusFromSeverity(worst.severity),
+        severity: worst.severity,
+        reports: list.length,
+        lastUpdated: formatRelativeDate(latest.created_at),
+      };
+    })
+    .sort(
+      (a, b) =>
+        (severityPriority[b.severity] || 0) -
+          (severityPriority[a.severity] || 0) || b.reports - a.reports
+    );
+}
