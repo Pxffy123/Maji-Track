@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Droplets,
@@ -14,117 +14,52 @@ import {
 
 import AreaCard from "../components/AreaCard";
 import ReportCard from "../components/ReportCard";
+import Navbar from "../components/Navbar";
+import WeatherPanel from "../components/WeatherPanel";
+import { getNairobiWeather } from "../services/weather";
+import { getReports } from "../data/reports";
+import { buildAreas, sortReports, toReportCard } from "../data/areas";
 
 const Dashboard = () => {
   const navigate = useNavigate();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSeverity, setSelectedSeverity] = useState("All");
+  const [weather, setWeather] = useState(null);
+  const [weatherLoading, setWeatherLoading] = useState(true);
+  const [weatherError, setWeatherError] = useState("");
 
-  // Sample Nairobi district data
-  const areas = [
-    {
-      id: "embakasi",
-      name: "Embakasi",
-      location: "Umoja 1, Pipeline, Donholm",
-      status: "No Water",
-      severity: "Critical",
-      reports: 18,
-      lastUpdated: "Today",
-    },
-    {
-      id: "kibra",
-      name: "Kibra",
-      location: "Laini Saba, Makina",
-      status: "No Water",
-      severity: "Critical",
-      reports: 15,
-      lastUpdated: "Today",
-    },
-    {
-      id: "westlands",
-      name: "Westlands",
-      location: "Kangemi, Mountain View",
-      status: "Low Supply",
-      severity: "High",
-      reports: 12,
-      lastUpdated: "Today",
-    },
-    {
-      id: "makadara",
-      name: "Makadara",
-      location: "Buruburu, Maringo",
-      status: "Low Supply",
-      severity: "Moderate",
-      reports: 9,
-      lastUpdated: "Yesterday",
-    },
-    {
-      id: "kasarani",
-      name: "Kasarani",
-      location: "Mwiki, Roysambu",
-      status: "Available",
-      severity: "Low",
-      reports: 7,
-      lastUpdated: "Yesterday",
-    },
-  ];
+  // Approved reports from the backend
+  const [rawReports, setRawReports] = useState([]);
+  const [reportsLoading, setReportsLoading] = useState(true);
+  const [reportsError, setReportsError] = useState("");
 
-  // Sample verified water shortage reports
-  const reports = [
-    {
-      id: 1,
-      title: "Critical Water Shortage",
-      area: "Umoja 1, Embakasi",
-      description:
-        "Residents have reported being without water for approximately three weeks.",
-      status: "No Water",
-      date: "Today",
-      verified: true,
-      severity: "Critical",
-    },
-    {
-      id: 2,
-      title: "Prolonged Water Interruption",
-      area: "Laini Saba, Kibra",
-      description:
-        "Several households have experienced an extended interruption in water supply.",
-      status: "No Water",
-      date: "Today",
-      verified: true,
-      severity: "Critical",
-    },
-    {
-      id: 3,
-      title: "Irregular Water Supply",
-      area: "Kangemi, Westlands",
-      description:
-        "Residents report inconsistent water supply over the past five days.",
-      status: "Low Supply",
-      date: "Yesterday",
-      verified: true,
-      severity: "High",
-    },
-    {
-      id: 4,
-      title: "Water Supply Disruption",
-      area: "Buruburu, Makadara",
-      description:
-        "Water supply has been inconsistent in several neighbourhoods.",
-      status: "Low Supply",
-      date: "Yesterday",
-      verified: true,
-      severity: "Moderate",
-    },
-  ];
+  useEffect(() => {
+    let cancelled = false;
+    getReports()
+      .then((data) => !cancelled && setRawReports(Array.isArray(data) ? data : []))
+      .catch((err) => !cancelled && setReportsError(err.message))
+      .finally(() => !cancelled && setReportsLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
-  // Sort by severity
-  const severityPriority = {
-    Critical: 4,
-    High: 3,
-    Moderate: 2,
-    Low: 1,
-  };
+  const sortedRaw = useMemo(() => sortReports(rawReports), [rawReports]);
+  const reports = useMemo(() => sortedRaw.map(toReportCard), [sortedRaw]);
+  const areas = useMemo(() => buildAreas(rawReports), [rawReports]);
+  const topReport = sortedRaw[0];
+
+  useEffect(() => {
+    let cancelled = false;
+    getNairobiWeather()
+      .then((data) => !cancelled && setWeather(data))
+      .catch((err) => !cancelled && setWeatherError(err.message))
+      .finally(() => !cancelled && setWeatherLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const filteredAreas = useMemo(() => {
     return areas
@@ -139,16 +74,9 @@ const Dashboard = () => {
 
         return matchesSearch && matchesSeverity;
       })
-      .sort(
-        (a, b) =>
-          severityPriority[b.severity] -
-          severityPriority[a.severity]
-      );
-  }, [searchTerm, selectedSeverity]);
+  }, [areas, searchTerm, selectedSeverity]);
 
-  const sortedReports = [...reports].sort(
-    (a, b) => severityPriority[b.severity] - severityPriority[a.severity]
-  );
+  const sortedReports = reports; // already sorted by severity, newest first
 
   // Dashboard statistics
   const totalReports = reports.length;
@@ -172,55 +100,7 @@ const Dashboard = () => {
         color: "#0f172a",
       }}
     >
-      {/* TOP NAVIGATION */}
-      <nav
-        style={{
-          background: "#ffffff",
-          borderBottom: "1px solid #e2e8f0",
-          padding: "18px 5%",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: "15px",
-        }}
-      >
-        <h2
-          style={{
-            color: "#0284c7",
-            fontSize: "25px",
-            fontWeight: "800",
-            margin: 0,
-          }}
-        >
-          <Droplets
-            size={25}
-            style={{ verticalAlign: "middle", marginRight: "7px" }}
-          />
-          MajiTrack
-        </h2>
-
-        <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-          <button
-            onClick={() => navigate("/submit-report")}
-            style={{
-              background: "#0284c7",
-              color: "#ffffff",
-              border: "none",
-              borderRadius: "9px",
-              padding: "11px 17px",
-              fontWeight: "600",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "7px",
-            }}
-          >
-            <Plus size={17} />
-            Submit Report
-          </button>
-        </div>
-      </nav>
+      <Navbar />
 
       <main style={{ padding: "35px 5%", maxWidth: "1400px", margin: "auto" }}>
         {/* WELCOME SECTION */}
@@ -246,6 +126,22 @@ const Dashboard = () => {
             affecting communities across Nairobi.
           </p>
         </section>
+
+        {reportsLoading && (
+          <p style={{ color: "#64748b", marginBottom: "20px" }}>
+            Loading verified reports...
+          </p>
+        )}
+        {reportsError && (
+          <p style={{ color: "#b91c1c", marginBottom: "20px" }}>
+            Could not load reports: {reportsError}
+          </p>
+        )}
+        {!reportsLoading && !reportsError && rawReports.length === 0 && (
+          <p style={{ color: "#64748b", marginBottom: "20px" }}>
+            No verified shortages have been reported yet.
+          </p>
+        )}
 
         {/* STATISTICS */}
         <section
@@ -276,8 +172,8 @@ const Dashboard = () => {
               color: "#dc2626",
             },
             {
-              label: "Areas Monitored",
-              value: areas.length,
+              label: "Low Supply Areas",
+              value: areas.filter((a) => a.status === "Low Supply").length,
               icon: LayoutDashboard,
               color: "#7c3aed",
             },
@@ -315,7 +211,17 @@ const Dashboard = () => {
           })}
         </section>
 
+        {/* WEATHER */}
+        <section style={{ marginBottom: "35px", maxWidth: "460px" }}>
+          <WeatherPanel
+            weather={weather}
+            loading={weatherLoading}
+            error={weatherError}
+          />
+        </section>
+
         {/* CRITICAL SHORTAGE HIGHLIGHT */}
+        {topReport && (
         <section
           style={{
             background: "#fff1f2",
@@ -340,12 +246,11 @@ const Dashboard = () => {
           </div>
 
           <h2 style={{ fontSize: "23px", marginBottom: "10px" }}>
-            Umoja 1, Embakasi
+            {topReport.location}, {topReport.district}
           </h2>
 
           <p style={{ color: "#64748b", lineHeight: "1.7" }}>
-            Residents have reported being without water for approximately
-            three weeks. This shortage requires urgent attention.
+            {topReport.description}
           </p>
 
           <div
@@ -358,20 +263,20 @@ const Dashboard = () => {
             }}
           >
             <span>
-              <strong>Severity:</strong> Critical
+              <strong>Severity:</strong> {topReport.severity}
             </span>
 
             <span>
-              <strong>Duration:</strong> 3 weeks
+              <strong>Duration:</strong> {topReport.time_without_water}
             </span>
 
             <span>
-              <strong>District:</strong> Embakasi
+              <strong>District:</strong> {topReport.district}
             </span>
           </div>
 
           <button
-            onClick={() => navigate("/areas/embakasi")}
+            onClick={() => navigate(`/areas/${topReport.district_id}`)}
             style={{
               background: "#be123c",
               color: "#ffffff",
@@ -385,6 +290,7 @@ const Dashboard = () => {
             Explore Shortage <ArrowUpRight size={16} />
           </button>
         </section>
+        )}
 
         {/* DISTRICT EXPLORER */}
         <section style={{ marginBottom: "40px" }}>
