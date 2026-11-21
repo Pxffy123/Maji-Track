@@ -1,3 +1,4 @@
+import React from "react";
 // Accepts the labels used across the app (Critical, High, Moderate, Low).
 // "medium" is kept as an alias of "moderate".
 const LEVELS = {
