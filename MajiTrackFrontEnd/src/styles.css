@@ -1184,3 +1184,74 @@ a {
     gap: 12px;
   }
 }
+
+
+/* EMAIL VERIFICATION */
+.verification-email {
+  margin: 12px 0 20px;
+  color: #2697cf;
+  font-size: 15px;
+  word-break: break-word;
+}
+
+.resend-verification-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 12px;
+  padding: 13px 18px;
+  border: 1px solid #2697cf;
+  border-radius: 8px;
+  background: transparent;
+  color: #2697cf;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.resend-verification-btn:hover:not(:disabled) {
+  background: #2697cf;
+  color: white;
+}
+
+.resend-verification-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.text-btn {
+  border: none;
+  background: none;
+  color: #2697cf;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.text-btn:hover {
+  text-decoration: underline;
+}
+
+/* FORM MESSAGES */
+.form-message {
+  padding: 11px 13px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 10px 0;
+}
+
+.form-message.error {
+  background: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+  border: 1px solid rgba(220, 53, 69, 0.25);
+}
+
+.form-message.success {
+  background: rgba(40, 167, 69, 0.1);
+  color: #28a745;
+  border: 1px solid rgba(40, 167, 69, 0.25);
+}
