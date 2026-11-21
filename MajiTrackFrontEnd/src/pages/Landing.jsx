@@ -1,4 +1,3 @@
-
 import "../styles.css";
 
 import React, { useState } from "react";
@@ -200,11 +199,10 @@ function Landing() {
     }
   }
 
-  
   async function handleResendVerification() {
-    const email = verificationStep
-      ? verificationEmail.trim()
-      : loginForm.email.trim();
+    const email = (verificationStep ? verificationEmail : loginForm.email)
+      .trim()
+      .toLowerCase();
 
     if (!email) {
       if (verificationStep) {
@@ -225,64 +223,24 @@ function Landing() {
         body: JSON.stringify({ email }),
       });
 
-      if (verificationStep) {
-        setVerificationMessage(
-          data.message || "A new verification code has been sent to your email."
-        );
-        setVerificationMessageType("success");
-        setVerificationCode("");
-      } else {
-        // Move the user from login to the verification screen
-        setVerificationEmail(email.toLowerCase());
-        setVerificationCode("");
-        setVerificationMessage(
-          data.message || "A new verification code has been sent to your email."
-        );
-        setVerificationMessageType("success");
-        setVerificationStep(true);
-        setShowResend(false);
+      // If resend was triggered from the login form, switch to the
+      // existing verification screen so the user can enter the new code.
+      setVerificationEmail(email);
+      setVerificationCode("");
+      setVerificationMessage(
+        data.message || "A new verification code has been sent to your email."
+      );
+      setVerificationMessageType("success");
+      setVerificationStep(true);
+      setShowResend(false);
+      setLoginMessage("");
+      setLoginMessageType("");
 
-        setTimeout(() => {
-          document.getElementById("register")?.scrollIntoView({
-            behavior: "smooth",
-          });
-        }, 100);
-      }
-    } catch (error) {
-      if (verificationStep) {
-        setVerificationMessage(error.message);
-        setVerificationMessageType("error");
-      } else {
-        setLoginMessage(error.message);
-        setLoginMessageType("error");
-      }
-    } finally {
-      setResending(false);
-    }
-  }
-
-
-    setResending(true);
-
-    try {
-      const data = await apiRequest("/auth/resend-verification", {
-        method: "POST",
-        body: JSON.stringify({ email }),
-      });
-
-      if (verificationStep) {
-        setVerificationMessage(
-          data.message || "A new verification code has been sent to your email."
-        );
-        setVerificationMessageType("success");
-        setVerificationCode("");
-      } else {
-        setLoginMessage(
-          data.message || "A new verification code has been sent to your email."
-        );
-        setLoginMessageType("success");
-        setShowResend(false);
-      }
+      setTimeout(() => {
+        document.getElementById("register")?.scrollIntoView({
+          behavior: "smooth",
+        });
+      }, 100);
     } catch (error) {
       if (verificationStep) {
         setVerificationMessage(error.message);
