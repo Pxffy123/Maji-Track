@@ -1,18 +1,21 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { NavLink, Link, useNavigate } from "react-router-dom";
 import { Droplets, Menu, X } from "lucide-react";
-import { getToken, clearSession } from "../services/api";
+import { getToken, getUser, clearSession } from "../services/api";
 
-const links = [
+const baseLinks = [
   { to: "/dashboard", label: "Dashboard" },
   { to: "/submit-report", label: "Report shortage" },
-  { to: "/admin", label: "Admin" },
 ];
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const loggedIn = Boolean(getToken());
+  const isAdmin = loggedIn && getUser()?.role === "admin";
+  const links = isAdmin
+    ? [...baseLinks, { to: "/admin", label: "Admin" }]
+    : baseLinks;
   const close = () => setOpen(false);
 
   function logout() {
