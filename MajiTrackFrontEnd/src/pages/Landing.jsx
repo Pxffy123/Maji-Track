@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   Droplets,
   MapPin,
@@ -13,150 +12,9 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import "./style.css";
-
-const API_URL =
-  import.meta.env.VITE_API_URL || "http://127.0.0.1:5555/api";
-
-async function apiRequest(endpoint, options = {}) {
-  const token = localStorage.getItem("access_token");
-
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
-  });
-
-  const data = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    throw new Error(
-      data.error || data.message || data.msg || "Something went wrong."
-    );
-  }
-
-  return data;
-}
 
 function Landing() {
-  const navigate = useNavigate();
-
   const [mobileMenu, setMobileMenu] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  const [loginForm, setLoginForm] = useState({
-    email: "",
-    password: "",
-  });
-
-  const [registerForm, setRegisterForm] = useState({
-    username: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
-
-  const [loginMessage, setLoginMessage] = useState("");
-  const [registerMessage, setRegisterMessage] = useState("");
-
-  const [loginMessageType, setLoginMessageType] = useState("");
-  const [registerMessageType, setRegisterMessageType] = useState("");
-
-  function handleLoginChange(e) {
-    setLoginForm({
-      ...loginForm,
-      [e.target.name]: e.target.value,
-    });
-  }
-
-  function handleRegisterChange(e) {
-    setRegisterForm({
-      ...registerForm,
-      [e.target.name]: e.target.value,
-    });
-  }
-
-  async function handleRegister(e) {
-    e.preventDefault();
-
-    setRegisterMessage("");
-    setRegisterMessageType("");
-
-    if (registerForm.password !== registerForm.confirmPassword) {
-      setRegisterMessage("Passwords do not match.");
-      setRegisterMessageType("error");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const data = await apiRequest("/auth/register", {
-        method: "POST",
-        body: JSON.stringify({
-          username: registerForm.username,
-          email: registerForm.email,
-          password: registerForm.password,
-        }),
-      });
-
-      setRegisterMessage(
-        data.message || "Registration successful. You can now log in."
-      );
-      setRegisterMessageType("success");
-
-      setRegisterForm({
-        username: "",
-        email: registerForm.email,
-        password: "",
-        confirmPassword: "",
-      });
-    } catch (error) {
-      setRegisterMessage(error.message);
-      setRegisterMessageType("error");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleLogin(e) {
-    e.preventDefault();
-
-    setLoginMessage("");
-    setLoginMessageType("");
-    setLoading(true);
-
-    try {
-      const data = await apiRequest("/auth/login", {
-        method: "POST",
-        body: JSON.stringify(loginForm),
-      });
-
-      if (data.access_token) {
-        localStorage.setItem("access_token", data.access_token);
-      }
-
-      if (data.user) {
-        localStorage.setItem("user", JSON.stringify(data.user));
-      }
-
-      if (!data.access_token) {
-        throw new Error(
-          "Login response did not include an access token. Please check the backend login response."
-        );
-      }
-
-      navigate("/dashboard");
-    } catch (error) {
-      setLoginMessage(error.message);
-      setLoginMessageType("error");
-    } finally {
-      setLoading(false);
-    }
-  }
 
   function closeMenu() {
     setMobileMenu(false);
@@ -164,7 +22,6 @@ function Landing() {
 
   return (
     <div className="landing-page">
-      {/* NAVBAR */}
       <nav className="navbar">
         <a href="#home" className="logo" onClick={closeMenu}>
           <Droplets size={28} />
@@ -185,14 +42,17 @@ function Landing() {
           <a href="#about" onClick={closeMenu}>About</a>
           <a href="#services" onClick={closeMenu}>Services</a>
           <a href="#how-it-works" onClick={closeMenu}>How It Works</a>
-          <a href="#login" onClick={closeMenu}>Login</a>
-          <a href="#register" className="nav-register" onClick={closeMenu}>
+          <a href="/login" onClick={closeMenu}>Login</a>
+          <a
+            href="/register"
+            className="nav-register"
+            onClick={closeMenu}
+          >
             Get Started
           </a>
         </div>
       </nav>
 
-      {/* HERO SECTION */}
       <section className="hero" id="home">
         <div className="hero-content">
           <p className="eyebrow">Water Management Made Easier</p>
@@ -209,7 +69,7 @@ function Landing() {
           </p>
 
           <div className="hero-buttons">
-            <a href="#register" className="primary-btn">
+            <a href="/register" className="primary-btn">
               Get Started <ArrowRight size={18} />
             </a>
 
@@ -229,7 +89,6 @@ function Landing() {
         </div>
       </section>
 
-      {/* ABOUT / PROBLEM SECTION */}
       <section className="section problem-section" id="about">
         <p className="section-label">THE PROBLEM</p>
         <h2>Why Maji-Track?</h2>
@@ -269,7 +128,6 @@ function Landing() {
         </div>
       </section>
 
-      {/* SOLUTION SECTION */}
       <section className="section solution-section">
         <div className="solution-content">
           <p className="section-label">OUR SOLUTION</p>
@@ -304,7 +162,6 @@ function Landing() {
         </div>
       </section>
 
-      {/* SERVICES SECTION */}
       <section className="section features" id="services">
         <p className="section-label">WHAT WE OFFER</p>
         <h2>Our Services</h2>
@@ -340,7 +197,6 @@ function Landing() {
         </div>
       </section>
 
-      {/* HOW IT WORKS */}
       <section className="section how-section" id="how-it-works">
         <p className="section-label">GETTING STARTED</p>
         <h2>How Maji-Track Works</h2>
@@ -372,7 +228,6 @@ function Landing() {
         </div>
       </section>
 
-      {/* IMPACT SECTION */}
       <section className="section impact-section">
         <div className="impact-content">
           <Droplets size={45} />
@@ -381,124 +236,13 @@ function Landing() {
             Our goal is to make it easier for communities to report water
             problems and for administrators to respond to them.
           </p>
-          <a href="#register" className="primary-btn">
+
+          <a href="/register" className="primary-btn">
             Join Maji-Track <ArrowRight size={18} />
           </a>
         </div>
       </section>
 
-      {/* LOGIN AND REGISTER */}
-      <section className="section account-section" id="login">
-        <div className="account-card">
-          <div className="account-icon">
-            <ShieldCheck size={35} />
-          </div>
-
-          <h2>Welcome Back</h2>
-          <p>Log in to your Maji-Track account.</p>
-
-          <form onSubmit={handleLogin}>
-            <input
-              type="email"
-              name="email"
-              placeholder="Email address"
-              value={loginForm.email}
-              onChange={handleLoginChange}
-              required
-            />
-
-            <input
-              type="password"
-              name="password"
-              placeholder="Password"
-              value={loginForm.password}
-              onChange={handleLoginChange}
-              required
-            />
-
-            {loginMessage && (
-              <p className={`form-message ${loginMessageType}`}>
-                {loginMessage}
-              </p>
-            )}
-
-            <button type="submit" className="primary-btn full-btn" disabled={loading}>
-              {loading ? "Please wait..." : "Login"}
-            </button>
-          </form>
-
-          <p className="account-switch">
-            Don't have an account? <a href="#register">Register here</a>
-          </p>
-        </div>
-      </section>
-
-      <section className="section account-section register-section" id="register">
-        <div className="account-card">
-          <div className="account-icon">
-            <Droplets size={35} />
-          </div>
-
-          <h2>Create Your Account</h2>
-          <p>Join Maji-Track and help improve water services.</p>
-
-          <form onSubmit={handleRegister}>
-            <input
-              type="text"
-              name="username"
-              placeholder="Username"
-              value={registerForm.username}
-              onChange={handleRegisterChange}
-              required
-            />
-
-            <input
-              type="email"
-              name="email"
-              placeholder="Email address"
-              value={registerForm.email}
-              onChange={handleRegisterChange}
-              required
-            />
-
-            <input
-              type="password"
-              name="password"
-              placeholder="Password"
-              value={registerForm.password}
-              onChange={handleRegisterChange}
-              required
-              minLength="8"
-            />
-
-            <input
-              type="password"
-              name="confirmPassword"
-              placeholder="Confirm password"
-              value={registerForm.confirmPassword}
-              onChange={handleRegisterChange}
-              required
-              minLength="8"
-            />
-
-            {registerMessage && (
-              <p className={`form-message ${registerMessageType}`}>
-                {registerMessage}
-              </p>
-            )}
-
-            <button type="submit" className="primary-btn full-btn" disabled={loading}>
-              {loading ? "Please wait..." : "Create Account"}
-            </button>
-          </form>
-
-          <p className="account-switch">
-            Already have an account? <a href="#login">Login here</a>
-          </p>
-        </div>
-      </section>
-
-      {/* FOOTER */}
       <footer className="footer">
         <div className="footer-content">
           <div className="footer-brand">
@@ -516,7 +260,9 @@ function Landing() {
         </div>
 
         <div className="footer-bottom">
-          <p>© {new Date().getFullYear()} Maji-Track. All rights reserved.</p>
+          <p>
+            © {new Date().getFullYear()} Maji-Track. All rights reserved.
+          </p>
         </div>
       </footer>
     </div>
