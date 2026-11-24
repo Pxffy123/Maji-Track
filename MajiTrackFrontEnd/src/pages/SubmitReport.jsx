@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import Navbar from "../components/Navbar";
 import { submitReport } from "../data/reports";
-import React from "react";
+import { apiRequest, getToken } from "../services/api";
 
-const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 const SEVERITIES = ["Critical", "High", "Moderate", "Low"];
 const UNITS = ["days", "weeks", "months"];
 
@@ -23,10 +24,15 @@ export default function SubmitReport() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    fetch(`${API}/districts`)
-      .then((res) => res.json())
-      .then((data) => setDistricts(Array.isArray(data) ? data : []))
-      .catch(() => setStatus({ type: "error", message: "Could not load districts." }));
+    apiRequest("/districts")
+      .then((data) =>
+        setDistricts(
+          Array.isArray(data) ? data : data.districts || data.data || []
+        )
+      )
+      .catch(() =>
+        setStatus({ type: "error", message: "Could not load districts." })
+      );
   }, []);
 
   function handleChange(e) {
@@ -52,7 +58,7 @@ export default function SubmitReport() {
     setErrors(found);
     if (Object.keys(found).length > 0) return;
 
-    if (!localStorage.getItem("token")) {
+    if (!getToken()) {
       setStatus({ type: "error", message: "Please log in to submit a report." });
       return;
     }
@@ -79,10 +85,17 @@ export default function SubmitReport() {
   }
 
   return (
+    <>
+    <Navbar />
     <main className="submit-report">
       <h1>Report a Water Shortage</h1>
 
       {status.message && <p className={`message ${status.type}`}>{status.message}</p>}
+      {status.message === "Please log in to submit a report." && (
+        <p>
+          <Link to="/#login">Go to login</Link>
+        </p>
+      )}
 
       <form onSubmit={handleSubmit} noValidate>
         <label>
@@ -153,5 +166,6 @@ export default function SubmitReport() {
         </button>
       </form>
     </main>
+    </>
   );
 }

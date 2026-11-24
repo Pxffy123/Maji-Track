@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   Droplets,
@@ -9,13 +9,39 @@ import {
   Clock,
   FileText,
 } from "lucide-react";
+import ReportCard from "../components/ReportCard";
+import { getReports } from "../data/reports";
+import { buildAreas, sortReports, toReportCard } from "../data/areas";
 
 const AreaDetails = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { id } = useParams();
 
-  const area = location.state?.area;
+  // Show the area passed from the dashboard instantly, then load the real
+  // approved reports for this district (works on refresh and direct links too).
+  const [area, setArea] = useState(location.state?.area || null);
+  const [areaReports, setAreaReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    getReports(id)
+      .then((data) => {
+        if (cancelled) return;
+        const list = Array.isArray(data) ? data : [];
+        setAreaReports(sortReports(list).map(toReportCard));
+        const built = buildAreas(list)[0];
+        if (built) setArea(built);
+      })
+      .catch((err) => !cancelled && setError(err.message))
+      .finally(() => !cancelled && setLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
 
   const statusStyles = {
     "No Water": {
@@ -38,11 +64,19 @@ const AreaDetails = () => {
     },
   };
 
-  if (!area || area.id !== id) {
+  if (loading && !area) {
+    return (
+      <div style={{ padding: "40px", fontFamily: "Arial" }}>
+        <p>Loading area details...</p>
+      </div>
+    );
+  }
+
+  if (!area) {
     return (
       <div style={{ padding: "40px", fontFamily: "Arial" }}>
         <h2>Area details unavailable</h2>
-        <p>Please return to the dashboard and select an area.</p>
+        <p>{error || "This district has no verified reports yet."}</p>
         <button onClick={() => navigate("/dashboard")}>
           Back to Dashboard
         </button>
@@ -159,6 +193,17 @@ const AreaDetails = () => {
           <p><strong>Severity:</strong> {area.severity}</p>
           <p><strong>Total Reports:</strong> {area.reports}</p>
         </section>
+
+        {areaReports.length > 0 && (
+          <section style={{ marginTop: "22px" }}>
+            <h2 style={{ marginBottom: "14px" }}>Verified Reports</h2>
+            <div style={{ display: "grid", gap: "14px" }}>
+              {areaReports.map((report) => (
+                <ReportCard key={report.id} report={report} />
+              ))}
+            </div>
+          </section>
+        )}
       </main>
     </div>
   );
