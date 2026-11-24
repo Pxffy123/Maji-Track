@@ -1,34 +1,8 @@
- import React, { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Droplets } from "lucide-react";
-
 import { apiRequest } from "../services/api";
 
-async function apiRequest(endpoint, options = {}) {
-  const token = localStorage.getItem("access_token");
-
-  const response = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
-  });
-
-  const data = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    throw new Error(
-      data.error ||
-      data.message ||
-      data.msg ||
-      `Request failed (${response.status}).`
-    );
-  }
-
-  return data;
-}
 
 function Register() {
   const navigate = useNavigate();
