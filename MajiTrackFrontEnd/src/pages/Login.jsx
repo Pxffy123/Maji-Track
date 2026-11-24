@@ -1,14 +1,15 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ShieldCheck } from "lucide-react";
+import { apiRequest } from "../services/api";
+import { apiRequest, saveSession } from "../services/api";
 
-const API_URL =
-  import.meta.env.VITE_API_URL || "http://127.0.0.1:5555/api";
+
 
 async function apiRequest(endpoint, options = {}) {
   const token = localStorage.getItem("access_token");
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
+  const response = await fetch(`${API_BASE}${endpoint}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -72,11 +73,8 @@ function Login() {
         );
       }
 
-      localStorage.setItem("access_token", token);
+      saveSession(token, data.user, data.refresh_token);
 
-      if (data.user) {
-        localStorage.setItem("user", JSON.stringify(data.user));
-      }
 
       setLoginForm({
         email: "",

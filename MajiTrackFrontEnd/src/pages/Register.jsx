@@ -2,13 +2,12 @@
 import { useNavigate } from "react-router-dom";
 import { Droplets } from "lucide-react";
 
-const API_URL =
-  import.meta.env.VITE_API_URL || "http://127.0.0.1:5555/api";
+import { apiRequest } from "../services/api";
 
 async function apiRequest(endpoint, options = {}) {
   const token = localStorage.getItem("access_token");
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
+  const response = await fetch(`${API_BASE}${endpoint}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",

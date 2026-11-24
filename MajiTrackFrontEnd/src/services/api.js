@@ -2,7 +2,9 @@
 // Set VITE_API_BASE_URL in .env (must end with /api) to point at your backend,
 // e.g. https://your-app.up.railway.app/api
 export const API_BASE =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:5555/api";
+  import.meta.env.VITE_API_BASE_URL ||
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:5555/api";
 
 const TOKEN_KEY = "access_token";
 const REFRESH_KEY = "refresh_token";
