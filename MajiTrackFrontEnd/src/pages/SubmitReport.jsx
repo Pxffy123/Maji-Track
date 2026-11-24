@@ -93,7 +93,7 @@ export default function SubmitReport() {
       {status.message && <p className={`message ${status.type}`}>{status.message}</p>}
       {status.message === "Please log in to submit a report." && (
         <p>
-          <Link to="/#login">Go to login</Link>
+          <Link to="/login">Go to login</Link>
         </p>
       )}
 
