@@ -61,10 +61,10 @@ export default function Navbar() {
           ) : (
             <>
               {/* Login and sign up live on the landing page */}
-              <Link to="/#login" onClick={close} className="nav-link">
+              <Link to="/login" onClick={close} className="nav-link">
                 Log in
               </Link>
-              <Link to="/#register" onClick={close} className="nav-link nav-cta">
+              <Link to="/register" onClick={close} className="nav-link nav-cta">
                 Sign up
               </Link>
             </>
