@@ -1,7 +1,4 @@
-
-
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
 import {
   Droplets,
   MapPin,
@@ -16,263 +13,8 @@ import {
   X,
 } from "lucide-react";
 
-import { apiRequest, saveSession } from "../services/api";
-
 function Landing() {
-  const navigate = useNavigate();
-
   const [mobileMenu, setMobileMenu] = useState(false);
-
-  // Scroll to #login / #register when arriving from another page
-  useEffect(() => {
-    const id = window.location.hash.slice(1);
-    if (id) {
-      setTimeout(() => document.getElementById(id)?.scrollIntoView(), 0);
-    }
-  }, []);
-  const [loading, setLoading] = useState(false);
-  const [resending, setResending] = useState(false);
-  const [verifying, setVerifying] = useState(false);
-  const [showResend, setShowResend] = useState(false);
-  const [verificationStep, setVerificationStep] = useState(false);
-
-  const [loginForm, setLoginForm] = useState({
-    email: "",
-    password: "",
-  });
-
-  const [registerForm, setRegisterForm] = useState({
-    username: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
-
-  const [verificationEmail, setVerificationEmail] = useState("");
-  const [verificationCode, setVerificationCode] = useState("");
-
-  const [loginMessage, setLoginMessage] = useState("");
-  const [registerMessage, setRegisterMessage] = useState("");
-  const [verificationMessage, setVerificationMessage] = useState("");
-
-  const [loginMessageType, setLoginMessageType] = useState("");
-  const [registerMessageType, setRegisterMessageType] = useState("");
-  const [verificationMessageType, setVerificationMessageType] = useState("");
-
-  function handleLoginChange(e) {
-    setLoginForm({
-      ...loginForm,
-      [e.target.name]: e.target.value,
-    });
-
-    if (e.target.name === "email") {
-      setShowResend(false);
-      setLoginMessage("");
-      setLoginMessageType("");
-    }
-  }
-
-  function handleRegisterChange(e) {
-    setRegisterForm({
-      ...registerForm,
-      [e.target.name]: e.target.value,
-    });
-  }
-
-  async function handleRegister(e) {
-    e.preventDefault();
-
-    setRegisterMessage("");
-    setRegisterMessageType("");
-
-    if (registerForm.password !== registerForm.confirmPassword) {
-      setRegisterMessage("Passwords do not match.");
-      setRegisterMessageType("error");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const email = registerForm.email.trim().toLowerCase();
-
-      const data = await apiRequest("/auth/register", {
-        method: "POST",
-        body: JSON.stringify({
-          username: registerForm.username.trim(),
-          email,
-          password: registerForm.password,
-        }),
-      });
-
-      setVerificationEmail(email);
-      setVerificationCode("");
-      setVerificationMessage(
-        data.message || "Check your email for your six-digit verification code."
-      );
-      setVerificationMessageType("success");
-      setVerificationStep(true);
-
-      setRegisterForm({
-        username: "",
-        email: "",
-        password: "",
-        confirmPassword: "",
-      });
-    } catch (error) {
-      setRegisterMessage(error.message);
-      setRegisterMessageType("error");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleVerifyEmail(e) {
-    e.preventDefault();
-
-    setVerificationMessage("");
-    setVerificationMessageType("");
-
-    if (!/^\d{6}$/.test(verificationCode.trim())) {
-      setVerificationMessage("Please enter your six-digit verification code.");
-      setVerificationMessageType("error");
-      return;
-    }
-
-    setVerifying(true);
-
-    try {
-      const data = await apiRequest("/auth/verify-email", {
-        method: "POST",
-        body: JSON.stringify({
-          email: verificationEmail.trim().toLowerCase(),
-          code: verificationCode.trim(),
-        }),
-      });
-
-      setVerificationMessage(
-        data.message || "Email verified successfully. You can now log in."
-      );
-      setVerificationMessageType("success");
-
-      setLoginForm({
-        email: verificationEmail,
-        password: "",
-      });
-
-      setVerificationCode("");
-      setVerificationStep(false);
-
-      setLoginMessage(
-        "Your email is verified! You can now log in."
-      );
-      setLoginMessageType("success");
-
-      setTimeout(() => {
-        document.getElementById("login")?.scrollIntoView({
-          behavior: "smooth",
-        });
-      }, 100);
-    } catch (error) {
-      setVerificationMessage(error.message);
-      setVerificationMessageType("error");
-    } finally {
-      setVerifying(false);
-    }
-  }
-
-  async function handleResendVerification() {
-    const email = (verificationStep ? verificationEmail : loginForm.email)
-      .trim()
-      .toLowerCase();
-
-    if (!email) {
-      if (verificationStep) {
-        setVerificationMessage("Please enter your email address.");
-        setVerificationMessageType("error");
-      } else {
-        setLoginMessage("Please enter your email address first.");
-        setLoginMessageType("error");
-      }
-      return;
-    }
-
-    setResending(true);
-
-    try {
-      const data = await apiRequest("/auth/resend-verification", {
-        method: "POST",
-        body: JSON.stringify({ email }),
-      });
-
-      // If resend was triggered from the login form, switch to the
-      // existing verification screen so the user can enter the new code.
-      setVerificationEmail(email);
-      setVerificationCode("");
-      setVerificationMessage(
-        data.message || "A new verification code has been sent to your email."
-      );
-      setVerificationMessageType("success");
-      setVerificationStep(true);
-      setShowResend(false);
-      setLoginMessage("");
-      setLoginMessageType("");
-
-      setTimeout(() => {
-        document.getElementById("register")?.scrollIntoView({
-          behavior: "smooth",
-        });
-      }, 100);
-    } catch (error) {
-      if (verificationStep) {
-        setVerificationMessage(error.message);
-        setVerificationMessageType("error");
-      } else {
-        setLoginMessage(error.message);
-        setLoginMessageType("error");
-      }
-    } finally {
-      setResending(false);
-    }
-  }
-
-  async function handleLogin(e) {
-    e.preventDefault();
-
-    setLoginMessage("");
-    setLoginMessageType("");
-    setShowResend(false);
-    setLoading(true);
-
-    try {
-      const data = await apiRequest("/auth/login", {
-        method: "POST",
-        body: JSON.stringify(loginForm),
-      });
-
-      if (data.access_token) {
-        saveSession(data.access_token, data.user, data.refresh_token);
-      }
-
-      if (!data.access_token) {
-        throw new Error(
-          "Login response did not include an access token. Please check the backend login response."
-        );
-      }
-
-      navigate("/dashboard");
-    } catch (error) {
-      setLoginMessage(error.message);
-      setLoginMessageType("error");
-
-      setShowResend(
-        error.status === 403 &&
-        error.message.toLowerCase().includes("verif")
-      );
-    } finally {
-      setLoading(false);
-    }
-  }
 
   function closeMenu() {
     setMobileMenu(false);
@@ -280,7 +22,6 @@ function Landing() {
 
   return (
     <div className="landing-page">
-      {/* NAVBAR */}
       <nav className="navbar">
         <a href="#home" className="logo" onClick={closeMenu}>
           <Droplets size={28} />
@@ -301,14 +42,17 @@ function Landing() {
           <a href="#about" onClick={closeMenu}>About</a>
           <a href="#services" onClick={closeMenu}>Services</a>
           <a href="#how-it-works" onClick={closeMenu}>How It Works</a>
-          <a href="#login" onClick={closeMenu}>Login</a>
-          <a href="#register" className="nav-register" onClick={closeMenu}>
+          <a href="/login" onClick={closeMenu}>Login</a>
+          <a
+            href="/register"
+            className="nav-register"
+            onClick={closeMenu}
+          >
             Get Started
           </a>
         </div>
       </nav>
 
-      {/* HERO SECTION */}
       <section className="hero" id="home">
         <div className="hero-content">
           <p className="eyebrow">Water Management Made Easier</p>
@@ -325,7 +69,7 @@ function Landing() {
           </p>
 
           <div className="hero-buttons">
-            <a href="#register" className="primary-btn">
+            <a href="/register" className="primary-btn">
               Get Started <ArrowRight size={18} />
             </a>
 
@@ -345,7 +89,6 @@ function Landing() {
         </div>
       </section>
 
-      {/* ABOUT / PROBLEM SECTION */}
       <section className="section problem-section" id="about">
         <p className="section-label">THE PROBLEM</p>
         <h2>Why Maji-Track?</h2>
@@ -385,7 +128,6 @@ function Landing() {
         </div>
       </section>
 
-      {/* SOLUTION SECTION */}
       <section className="section solution-section">
         <div className="solution-content">
           <p className="section-label">OUR SOLUTION</p>
@@ -420,7 +162,6 @@ function Landing() {
         </div>
       </section>
 
-      {/* SERVICES SECTION */}
       <section className="section features" id="services">
         <p className="section-label">WHAT WE OFFER</p>
         <h2>Our Services</h2>
@@ -445,7 +186,7 @@ function Landing() {
           <div className="feature-card">
             <ShieldCheck size={35} />
             <h3>Admin Management</h3>
-            <p>Administrators can review and manage reports.</p>
+            <p>Administrators can review and manage community reports.</p>
           </div>
 
           <div className="feature-card">
@@ -456,7 +197,6 @@ function Landing() {
         </div>
       </section>
 
-      {/* HOW IT WORKS */}
       <section className="section how-section" id="how-it-works">
         <p className="section-label">GETTING STARTED</p>
         <h2>How Maji-Track Works</h2>
@@ -488,7 +228,6 @@ function Landing() {
         </div>
       </section>
 
-      {/* IMPACT SECTION */}
       <section className="section impact-section">
         <div className="impact-content">
           <Droplets size={45} />
@@ -497,220 +236,13 @@ function Landing() {
             Our goal is to make it easier for communities to report water
             problems and for administrators to respond to them.
           </p>
-          <a href="#register" className="primary-btn">
+
+          <a href="/register" className="primary-btn">
             Join Maji-Track <ArrowRight size={18} />
           </a>
         </div>
       </section>
 
-      {/* LOGIN */}
-      <section className="section account-section" id="login">
-        <div className="account-card">
-          <div className="account-icon">
-            <ShieldCheck size={35} />
-          </div>
-
-          <h2>Welcome Back</h2>
-          <p>Log in to your Maji-Track account.</p>
-
-          <form onSubmit={handleLogin}>
-            <input
-              type="email"
-              name="email"
-              placeholder="Email address"
-              value={loginForm.email}
-              onChange={handleLoginChange}
-              required
-            />
-
-            <input
-              type="password"
-              name="password"
-              placeholder="Password"
-              value={loginForm.password}
-              onChange={handleLoginChange}
-              required
-            />
-
-            {loginMessage && (
-              <p className={`form-message ${loginMessageType}`}>
-                {loginMessage}
-              </p>
-            )}
-
-            {showResend && (
-              <button
-                type="button"
-                className="resend-verification-btn"
-                onClick={handleResendVerification}
-                disabled={resending || loading}
-              >
-                {resending ? "Sending..." : "Resend verification email"}
-              </button>
-            )}
-
-            <button
-              type="submit"
-              className="primary-btn full-btn"
-              disabled={loading || resending}
-            >
-              {loading ? "Please wait..." : "Login"}
-            </button>
-          </form>
-
-          <p className="account-switch">
-            Don't have an account? <a href="#register">Register here</a>
-          </p>
-        </div>
-      </section>
-
-      {/* REGISTER / EMAIL VERIFICATION */}
-      <section
-        className="section account-section register-section"
-        id="register"
-      >
-        <div className="account-card">
-          <div className="account-icon">
-            <Droplets size={35} />
-          </div>
-
-          {verificationStep ? (
-            <>
-              <h2>Verify Your Email</h2>
-              <p>
-                We've sent a six-digit verification code to:
-              </p>
-
-              <p className="verification-email">
-                <strong>{verificationEmail}</strong>
-              </p>
-
-              <form onSubmit={handleVerifyEmail}>
-                <input
-                  type="text"
-                  name="verificationCode"
-                  placeholder="Enter your 6-digit code"
-                  value={verificationCode}
-                  onChange={(e) =>
-                    setVerificationCode(
-                      e.target.value.replace(/\D/g, "").slice(0, 6)
-                    )
-                  }
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  maxLength={6}
-                  pattern="[0-9]{6}"
-                  required
-                />
-
-                {verificationMessage && (
-                  <p className={`form-message ${verificationMessageType}`}>
-                    {verificationMessage}
-                  </p>
-                )}
-
-                <button
-                  type="submit"
-                  className="primary-btn full-btn"
-                  disabled={verifying || resending}
-                >
-                  {verifying ? "Verifying..." : "Verify Email"}
-                </button>
-
-                <button
-                  type="button"
-                  className="resend-verification-btn"
-                  onClick={handleResendVerification}
-                  disabled={resending || verifying}
-                >
-                  {resending ? "Sending..." : "Resend verification code"}
-                </button>
-              </form>
-
-              <p className="account-switch">
-                Wrong email?{" "}
-                <button
-                  type="button"
-                  className="text-btn"
-                  onClick={() => {
-                    setVerificationStep(false);
-                    setVerificationMessage("");
-                    setVerificationMessageType("");
-                    setRegisterMessage("");
-                  }}
-                >
-                  Back to registration
-                </button>
-              </p>
-            </>
-          ) : (
-            <>
-              <h2>Create Your Account</h2>
-              <p>Join Maji-Track and help improve water services.</p>
-
-              <form onSubmit={handleRegister}>
-                <input
-                  type="text"
-                  name="username"
-                  placeholder="Username"
-                  value={registerForm.username}
-                  onChange={handleRegisterChange}
-                  required
-                />
-
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="Email address"
-                  value={registerForm.email}
-                  onChange={handleRegisterChange}
-                  required
-                />
-
-                <input
-                  type="password"
-                  name="password"
-                  placeholder="Password"
-                  value={registerForm.password}
-                  onChange={handleRegisterChange}
-                  required
-                  minLength="8"
-                />
-
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  placeholder="Confirm password"
-                  value={registerForm.confirmPassword}
-                  onChange={handleRegisterChange}
-                  required
-                  minLength="8"
-                />
-
-                {registerMessage && (
-                  <p className={`form-message ${registerMessageType}`}>
-                    {registerMessage}
-                  </p>
-                )}
-
-                <button
-                  type="submit"
-                  className="primary-btn full-btn"
-                  disabled={loading}
-                >
-                  {loading ? "Please wait..." : "Create Account"}
-                </button>
-              </form>
-
-              <p className="account-switch">
-                Already have an account? <a href="#login">Login here</a>
-              </p>
-            </>
-          )}
-        </div>
-      </section>
-
-      {/* FOOTER */}
       <footer className="footer">
         <div className="footer-content">
           <div className="footer-brand">
@@ -738,4 +270,3 @@ function Landing() {
 }
 
 export default Landing;
-
